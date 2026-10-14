@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketplace Category Performance - SG</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+    :root{
+        --cream:#f7ede2;      /* sidebar / page bg */
+        --panel:#ffffff;
+        --teal:#1f9e8f;       /* primary accent */
+        --teal-dark:#177a6e;
+        --coral:#ef6c53;      /* highlight */
+        --amber:#f2b04e;      /* charts */
+        --ink:#2b2b2b;
+        --muted:#8a8a8a;
+        --line:#ece3d6;
+        --green:#3aa76d;
+        --red:#e2574c;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+        font-family:'Segoe UI',Roboto,Arial,sans-serif;
+        background:var(--cream);
+        color:var(--ink);
+        display:flex;
+        min-height:100vh;
+        font-size:14px;
+    }
+    /* ===== SIDEBAR ===== */
+    .sidebar{
+        width:230px;
+        background:#fbf3e9;
+        border-right:1px solid var(--line);
+        padding:24px 18px;
+        display:flex;
+        flex-direction:column;
+        gap:26px;
+        position:sticky;
+        top:0;
+        height:100vh;
+        flex-shrink:0;
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--ink);}
+    .brand .dot{width:30px;height:30px;border-radius:9px;background:var(--teal);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;}
+    .nav{display:flex;flex-direction:column;gap:4px;}
+    .nav a{
+        display:flex;align-items:center;gap:10px;
+        padding:10px 12px;border-radius:10px;
+        color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px;cursor:pointer;
+    }
+    .nav a.active{background:var(--teal);color:#fff;}
+    .nav a:hover:not(.active){background:#f2e6d6;color:var(--ink);}
+    .side-card{
+        margin-top:auto;background:linear-gradient(135deg,#fff2ea,#ffe2d5);
+        border-radius:16px;padding:16px;text-align:center;
+    }
+    .side-card h4{font-size:13px;margin-bottom:6px;}
+    .side-card p{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:10px;}
+    .side-card button{background:var(--coral);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-weight:600;cursor:pointer;font-size:12px;}
+
+    /* ===== MAIN ===== */
+    .main{flex:1;padding:22px 26px;min-width:0;}
+    .topbar{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px;}
+    .topbar h1{font-size:26px;font-weight:700;}
+    .topbar .subtitle{color:var(--muted);font-size:13px;margin-top:2px;}
+    .status{font-size:12px;color:var(--muted);margin-top:4px;}
+    /* Bold notice banner reminding users to clear sheet filters */
+    .notice{
+        display:flex;align-items:flex-start;gap:10px;
+        background:#fff3e0;border:2px solid var(--coral);border-left:6px solid var(--coral);
+        border-radius:12px;padding:12px 16px;margin-bottom:16px;
+        font-size:14px;font-weight:600;color:#8a3b28;line-height:1.45;
+    }
+    .notice strong{font-weight:800;color:#c0392b;}
+    .notice .notice-ic{font-size:20px;line-height:1;flex-shrink:0;}
+
+    /* Filters */
+    .filters{
+        display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+        background:var(--panel);border-radius:16px;padding:14px 18px;margin-bottom:20px;
+        box-shadow:0 4px 18px rgba(0,0,0,.04);
+    }
+    .field{display:flex;flex-direction:column;gap:5px;}
+    .field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+    .field select,.field input{
+        padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:#fdfaf5;color:var(--ink);min-width:150px;
+    }
+    .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-weight:600;cursor:pointer;font-size:13px;}
+    .btn:hover{background:var(--teal-dark);}
+    .btn.ghost{background:#f2e6d6;color:var(--ink);}
+    .quick{display:flex;gap:6px;}
+    .quick button{background:#f2e6d6;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink);}
+    .quick button.active{background:var(--teal);color:#fff;}
+
+    /* KPI cards */
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+    .kpi{background:var(--panel);border-radius:16px;padding:16px 18px;box-shadow:0 4px 18px rgba(0,0,0,.04);}
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:600;}
+    .kpi .value{font-size:26px;font-weight:700;margin-top:6px;}
+    .kpi .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+    .kpi .ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;float:right;}
+    .ic.teal{background:#e2f3f0;color:var(--teal);}
+    .ic.coral{background:#fde7e1;color:var(--coral);}
+    .ic.amber{background:#fdf0da;color:#d98e1e;}
+    .ic.green{background:#e3f4ea;color:var(--green);}
+
+    /* Panels */
+    .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:20px;}
+    .grid2b{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+    @media(max-width:1050px){.grid2,.grid2b{grid-template-columns:1fr;}}
+    .panel{background:var(--panel);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.04);}
+    .panel h3{font-size:15px;margin-bottom:2px;}
+    .panel .hint{font-size:12px;color:var(--muted);margin-bottom:14px;}
+    .chart-wrap{position:relative;height:280px;}
+    .chart-wrap.tall{height:320px;}
+
+    /* Category table */
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line);}
+    th:first-child,td:first-child{text-align:left;}
+    thead th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;}
+    tbody tr:hover{background:#fbf6ef;}
+    .pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+    .up{background:#e3f4ea;color:var(--green);}
+    .down{background:#fde7e1;color:var(--red);}
+    .flat{background:#eee;color:var(--muted);}
+
+    /* Product cards */
+    .prod-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+    .pcard{background:var(--panel);border-radius:16px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.05);display:flex;flex-direction:column;}
+    .pcard .imgbox{height:150px;background:#f4ece1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+    .pcard .imgbox img{width:100%;height:100%;object-fit:cover;}
+    .pcard .imgbox .noimg{color:var(--muted);font-size:12px;text-align:center;padding:10px;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+    .pcard .rank{position:absolute;top:8px;left:8px;background:var(--coral);color:#fff;font-weight:700;font-size:12px;border-radius:20px;padding:3px 9px;}
+    .pcard .catbadge{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.9);color:var(--ink);font-weight:600;font-size:10.5px;border-radius:12px;padding:3px 8px;}
+    .pcard .body{padding:12px 13px;display:flex;flex-direction:column;gap:6px;flex:1;}
+    .pcard .name{font-weight:600;font-size:13px;line-height:1.3;min-height:34px;}
+    .pcard .pid{font-size:10.5px;color:var(--muted);}
+    .pcard .stats{display:flex;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px solid var(--line);}
+    .pcard .stats .s{display:flex;flex-direction:column;}
+    .pcard .stats .s .n{font-weight:700;font-size:15px;}
+    .pcard .stats .s .l{font-size:10px;color:var(--muted);}
+
+    /* Category highlight cards */
+    .cat-highlights{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+    .ch-card{background:#fdfaf5;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+    .ch-head{display:flex;justify-content:space-between;align-items:center;}
+    .ch-name{font-weight:700;font-size:15px;}
+    .ch-share{font-size:12px;font-weight:700;border-radius:12px;padding:2px 9px;}
+    .ch-sales{font-size:24px;font-weight:700;line-height:1;}
+    .ch-metrics{display:flex;justify-content:space-between;gap:6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 0;}
+    .ch-metrics>div{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;}
+    .ch-metrics .ch-m{font-weight:700;font-size:14px;}
+    .ch-metrics .ch-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+    .ch-top{display:flex;align-items:center;gap:10px;}
+    .ch-thumb{width:46px;height:46px;border-radius:10px;overflow:hidden;background:#f0e7db;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    .ch-thumb img{width:100%;height:100%;object-fit:cover;}
+    .ch-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;}
+    .ch-topinfo{min-width:0;}
+    .ch-toplabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+    .ch-topname{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .ch-topstats{font-size:11.5px;color:var(--muted);}
+    .ch-top-empty{font-size:12px;color:var(--muted);}
+
+    /* ===== MARKET TOGGLE (Left = Singapore, Right = Malaysia) ===== */
+    .market-toggle{
+        display:flex;align-items:center;gap:12px;
+        background:var(--panel);border-radius:16px;padding:10px 16px;
+        box-shadow:0 4px 18px rgba(0,0,0,.04);
+    }
+    .market-toggle .mt-label{
+        font-size:13px;font-weight:700;color:var(--muted);
+        transition:color .2s ease;white-space:nowrap;
+    }
+    .market-toggle .mt-label.active{color:var(--teal);}
+    .market-toggle .mt-label.my.active{color:var(--coral);}
+    .mt-flag{margin-right:5px;}
+    /* the switch track + knob */
+    .switch{position:relative;width:56px;height:28px;flex-shrink:0;}
+    .switch input{opacity:0;width:0;height:0;position:absolute;}
+    .switch .track{
+        position:absolute;inset:0;cursor:pointer;border-radius:28px;
+        background:var(--teal);transition:background .25s ease;
+    }
+    .switch .knob{
+        position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+        background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.25);transition:transform .25s ease;
+    }
+    /* checked = Malaysia (right) */
+    .switch input:checked + .track{background:var(--coral);}
+    .switch input:checked + .track .knob{transform:translateX(28px);}
+
+    .loading{text-align:center;padding:60px 20px;color:var(--teal);font-size:16px;}
+    .spinner{width:34px;height:34px;border:4px solid #e2f3f0;border-top-color:var(--teal);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .err{color:var(--red);}
+    .hidden{display:none;}
+    .section-title{font-size:18px;font-weight:700;margin:6px 0 14px;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand"><span class="dot">&#127804;</span> FNP Marketplace</div>
+    <nav class="nav" id="sideNav">
+        <a class="active" data-target="topAnchor">&#128202; Dashboard</a>
+        <a data-target="catPanel">&#128200; Categories</a>
+        <a data-target="trendPanel">&#128293; Trends</a>
+        <a data-target="prodPanel">&#127873; Products</a>
+    </nav>
+    <div class="side-card">
+        <h4>Live Google Sheet</h4>
+        <p>Data refreshes straight from your marketplace sheet. No install needed.</p>
+        <button onclick="loadData()">&#8635; Refresh</button>
+    </div>
+</aside>
+
+<main class="main">
+    <span id="topAnchor"></span>
+    <div class="topbar">
+        <div>
+            <h1 id="pageTitle">Marketplace Category Performance - SG</h1>
+            <div class="subtitle">Marketplace business &middot; category &amp; product level insights</div>
+            <div class="status" id="status"></div>
+        </div>
+        <!-- Market toggle: LEFT = Singapore (default), RIGHT = Malaysia -->
+        <div class="market-toggle" title="Flip left for Singapore, right for Malaysia">
+            <span class="mt-label sg active" id="mtLabelSG"><span class="mt-flag">&#127480;&#127468;</span>Singapore</span>
+            <label class="switch">
+                <input type="checkbox" id="marketToggle" onchange="onMarketToggle(this.checked)">
+                <span class="track"><span class="knob"></span></span>
+            </label>
+            <span class="mt-label my" id="mtLabelMY"><span class="mt-flag">&#127474;&#127486;</span>Malaysia</span>
+        </div>
+    </div>
+
+    <!-- Shown only when product images could not be downloaded (file:// CORS block) -->
+    <div class="notice hidden" id="imageHint" style="background:#fdecec;border-color:#c0392b;border-left-color:#c0392b;color:#8a1f1f;">
+        <span class="notice-ic">&#128247;</span>
+        <span>
+            <strong>Product images could not load.</strong>
+            This happens when the dashboard is opened directly as a file. Google blocks the image download for local files.
+            Fix: run it through a small local web server, then open <strong>http://localhost:8000</strong>.
+            In this folder run <code style="background:#fff;padding:1px 5px;border-radius:4px;">python -m http.server 8000</code>
+            (or <code style="background:#fff;padding:1px 5px;border-radius:4px;">npx serve</code>). All numbers still work either way; only images need this.
+        </span>
+    </div>
+
+    <!-- IMPORTANT NOTICE: clear sheet filters before reviewing -->
+    <div class="notice" id="filterNotice">
+        <span class="notice-ic">&#9888;</span>
+        <span><strong>Remove all filters from the Google Sheet to get accuracy in the data.</strong></span>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+        <div class="field">
+            <label>From date</label>
+            <input type="date" id="fromDate">
+        </div>
+        <div class="field">
+            <label>To date</label>
+            <input type="date" id="toDate">
+        </div>
+        <div class="field">
+            <label>Quick range</label>
+            <div class="quick" id="quickRange">
+                <button data-days="7" class="active">Last 7d</button>
+                <button data-days="14">14d</button>
+                <button data-days="30">30d</button>
+                <button data-days="60">60d</button>
+            </div>
+        </div>
+        <div class="field">
+            <label>Location</label>
+            <select id="locFilter"><option value="__all">All locations</option></select>
+        </div>
+        <div class="field">
+            <label>Store format</label>
+            <select id="fmtFilter"><option value="__all">All formats</option></select>
+        </div>
+        <div class="field">
+            <label>Category</label>
+            <select id="catFilter"><option value="__all">All categories</option></select>
+        </div>
+        <button class="btn" onclick="applyFilters()">Apply</button>
+        <button class="btn ghost" onclick="resetFilters()">Reset</button>
+        <button class="btn" style="background:var(--coral);" onclick="downloadCSV()">&#8681; Download CSV</button>
+    </div>
+
+    <div class="loading" id="loader">
+        <div class="spinner"></div>
+        Fetching live data from Google Sheets...
+    </div>
+
+    <div id="dash" class="hidden">
+        <!-- KPIs -->
+        <div class="kpis" id="kpis"></div>
+
+        <!-- Category charts -->
+        <div class="grid2" id="catPanel">
+            <div class="panel">
+                <h3>Category Sales Trend</h3>
+                <div class="hint" id="trendHint">Daily gross sales by category</div>
+                <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="panel">
+                <h3>Sales Mix by Category</h3>
+                <div class="hint">Share of gross sales</div>
+                <div class="chart-wrap"><canvas id="mixChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Category comparison -->
+        <div class="panel" style="margin-bottom:20px;">
+            <h3>Category Performance</h3>
+            <div class="hint">Units &amp; sales for the selected range</div>
+            <div class="chart-wrap"><canvas id="catBarChart"></canvas></div>
+        </div>
+
+        <!-- Category highlight cards: top category, top product per category, best growth -->
+        <div class="panel" id="trendPanel" style="margin-bottom:20px;">
+            <h3>Category Highlights</h3>
+            <div class="hint">Best performers and top product in each category for the selected range</div>
+            <div id="catHighlights" class="cat-highlights"></div>
+        </div>
+
+        <!-- Category table -->
+        <div class="panel" style="margin-bottom:20px;">
+            <h3>Category Summary</h3>
+            <div class="hint">Sorted by units sold (highest to lowest)</div>
+            <table id="catTable">
+                <thead><tr><th>Category</th><th>Units</th><th id="catTableSalesHdr">Gross Sales (S$)</th><th>Avg Item Value</th><th>Products</th><th>Sales Share</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Products -->
+        <div class="panel" id="prodPanel">
+            <div class="prod-head">
+                <div>
+                    <div class="section-title" style="margin:0;">Top Products</div>
+                    <div class="hint" style="margin:0;">By gross sales &middot; images matched via PID</div>
+                </div>
+                <div class="field" style="flex-direction:row;align-items:center;gap:8px;">
+                    <label style="margin:0;">Sort by</label>
+                    <select id="prodSort" onchange="renderProducts()">
+                        <option value="sales">Gross Sales</option>
+                        <option value="units">Units</option>
+                    </select>
+                    <select id="prodTop" onchange="renderProducts()">
+                        <option value="12">Top 12</option>
+                        <option value="24">Top 24</option>
+                        <option value="48">Top 48</option>
+                        <option value="9999">All</option>
+                    </select>
+                </div>
+            </div>
+            <div class="products" id="products"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+// ================= CONFIG =================
+// Two markets. The toggle on the topbar flips between them.
+//  - Singapore (default / toggle LEFT):  currency S$, gross-sales col "(S$)"
+//  - Malaysia  (toggle RIGHT):           currency RM, gross-sales col "(RM)"
+// Both markets read their product images from the SG sheet's IMAGE tab
+// (per requirement: image links come from the sheet the dashboard already uses).
+const MARKETS = {
+    SG: {
+        key:'SG',
+        label:'Singapore',
+        sheetId:'1Xcx0C4R9FSsCoK6TMa9mCI7g45mc_RXHzdQC4QZjfoo',
+        dataGid:'1629859257',    // category / product level sales
+        imageSheetId:'1Xcx0C4R9FSsCoK6TMa9mCI7g45mc_RXHzdQC4QZjfoo',
+        imageGid:'2024406762',   // PID -> image url
+        currency:'S$',
+        salesCol:'Item Gross Sales (S$)'
+    },
+    MY: {
+        key:'MY',
+        label:'Malaysia',
+        sheetId:'1GAa5Dq08YTD_f_0JCBXT30fy8hsXJoQ2Vz_icfKat6U',
+        dataGid:'1629859257',    // category / product level sales
+        // Images come from the SAME sheet the dashboard currently uses (SG image tab).
+        imageSheetId:'1Xcx0C4R9FSsCoK6TMa9mCI7g45mc_RXHzdQC4QZjfoo',
+        imageGid:'2024406762',
+        currency:'RM',
+        salesCol:'Item Gross Sales (RM)'
+    }
+};
+
+// Active market state. Defaults to Singapore.
+let MARKET = MARKETS.SG;
+
+// Derived references used by the fetch/parse code (kept in sync with MARKET).
+let SHEET_ID = MARKET.sheetId;
+let DATA_GID = MARKET.dataGid;
+let IMAGE_SHEET_ID = MARKET.imageSheetId;
+let IMAGE_GID = MARKET.imageGid;
+
+const COLORS = {
+    Cakes:'#f2b04e', Flowers:'#ef6c53', Combos:'#1f9e8f', Addon:'#3aa76d',
+    'Gift Hampers':'#7c6cef', Plants:'#4caf50', Personalised:'#e05fa0', Seasonal:'#4f9cf9',
+    'Other Gifts':'#c0603b', Chocolates:'#8d6e63'
+};
+const PALETTE = ['#1f9e8f','#ef6c53','#f2b04e','#7c6cef','#3aa76d','#e05fa0','#4f9cf9','#c0603b','#9e9e9e'];
+
+// Fixed display order for categories (used in every chart, table and filter).
+// Matches the canonicalised (Title Case) names. Anything not listed is appended
+// alphabetically after these. "Seasonal" also matches "Seasonal Plants".
+const CATEGORY_ORDER = ['Cakes','Flowers','Combos','Addon','Gift Hampers','Plants','Personalised','Seasonal'];
+function catRank(c){
+    const name=(c||'').trim();
+    let idx=CATEGORY_ORDER.findIndex(o=>o.toLowerCase()===name.toLowerCase());
+    if(idx<0){
+        // treat "Seasonal Plants", "Seasonal Gifts" etc. as "Seasonal"
+        const si=CATEGORY_ORDER.indexOf('Seasonal');
+        if(/^seasonal/i.test(name)) idx=si;
+    }
+    return idx<0?999:idx;
+}
+// Sort a list of category names into the fixed sequence above.
+function orderedCats(list){
+    return [...list].sort((a,b)=>{
+        const ra=catRank(a), rb=catRank(b);
+        if(ra!==rb) return ra-rb;
+        return String(a).localeCompare(String(b));
+    });
+}
+
+// ================= FETCH =================
+// IMPORTANT about Google Sheet filters (verified against this sheet):
+//  - "/export?format=csv" returns the ENTIRE sheet and IGNORES any active
+//    filter / filter-view on the tab. This is the ONLY endpoint that gives the
+//    full data when a filter is ON. It sends Access-Control-Allow-Origin:* so
+//    fetch() can read it, including from a file:// page in Chrome/Edge.
+//  - The gviz endpoints (out:csv and out:json) operate on the FILTERED range,
+//    so they return PARTIAL data whenever a filter is active. We only use gviz
+//    as a last resort and clearly flag it when we do.
+//
+// Order of attempts: /export csv (full data)  ->  gviz out:csv  ->  JSONP.
+let _cbCounter=0;
+let _usedFallback=false;
+let _imgFetchError=''; // set when the image tab CSV could not be downloaded
+// The data tab lives on the market's own sheet; images may live on a different
+// sheet (SG image tab). sheetIdForGid picks the right spreadsheet per gid.
+function sheetIdForGid(gid){
+    return String(gid)===String(IMAGE_GID) ? IMAGE_SHEET_ID : SHEET_ID;
+}
+function exportCsvUrl(gid){
+    // cache-buster so a filter change on the sheet is reflected on Refresh
+    return `https://docs.google.com/spreadsheets/d/${sheetIdForGid(gid)}/export?format=csv&gid=${gid}&_=${Date.now()}`;
+}
+function gvizCsvUrl(gid){
+    return `https://docs.google.com/spreadsheets/d/${sheetIdForGid(gid)}/gviz/tq?tqx=out:csv&gid=${gid}&_=${Date.now()}`;
+}
+// fetchCSV(gid, opts)
+//   opts.imageTab === true  -> this is the PID->image tab.
+//
+// WHY THE IMAGE TAB IS SPECIAL (root cause of missing images):
+//   The image tab is large (tens of thousands of PID rows) and has NO usable
+//   header row for gviz. The gviz endpoints (out:csv / out:json) MANGLE it:
+//   they fold every product id into a SINGLE row of "column labels", so after
+//   parsing almost no PID->url pairs survive and most product images vanish.
+//   Therefore, for the image tab we ONLY use /export?format=csv (which returns
+//   clean one-row-per-PID data) and we NEVER fall back to gviz. We instead
+//   retry /export more times with a longer timeout, because that endpoint is
+//   the only one that yields a correct image map.
+function fetchCSV(gid, opts){
+    opts = opts || {};
+    const isImage = !!opts.imageTab;
+    const timeout = isImage ? 45000 : 25000; // large image file needs more time
+    const tries   = isImage ? 6 : 3;         // try /export several times for images
+
+    // Chain N /export attempts. /export ignores sheet filters and returns the
+    // full, correctly-structured CSV.
+    let p = csvAttempt(exportCsvUrl(gid), timeout);
+    for (let i = 1; i < tries; i++) {
+        p = p.catch(() => csvAttempt(exportCsvUrl(gid), timeout));
+    }
+
+    if (isImage) {
+        // IMPORTANT: /export?format=csv is the ONLY endpoint that returns this
+        // large image tab as clean one-row-per-PID data. Both gviz feeds
+        // (out:csv AND out:json/JSONP) collapse every PID into a single column
+        // label, which is unusable, so we do NOT fall back to them here.
+        //
+        // The catch is that /export answers with a 307 redirect, and browsers
+        // block that redirect under CORS when the page origin is "null"
+        // (i.e. the file was opened directly as file://...). Served over
+        // http://localhost the same request succeeds. So on failure we return
+        // an empty map and loadData() shows a clear "run via localhost" hint.
+        return p.catch(err => {
+            console.error('Image CSV /export failed: '+err.message+
+                ' - if the page is opened as a local file, run it via a local web server instead (see console hint).');
+            _imgFetchError = err && err.message ? err.message : 'blocked';
+            _usedFallback = true;
+            return []; // empty map rather than corrupted gviz data
+        });
+    }
+
+    // Data tab: /export first, then the filter-respecting fallbacks.
+    return p
+        .catch(()=>{ _usedFallback=true; return csvAttempt(gvizCsvUrl(gid), timeout); })
+        .catch(err=>{
+            console.warn('All CSV endpoints failed for gid='+gid+' ('+err.message+'). Falling back to gviz JSON.');
+            _usedFallback=true;
+            return fetchJSONP(gid);
+        });
+}
+function csvAttempt(url, timeout){
+    const controller=new AbortController();
+    const t=setTimeout(()=>controller.abort(), timeout||25000);
+    return fetch(url,{redirect:'follow',signal:controller.signal,mode:'cors',credentials:'omit'})
+        .then(r=>{clearTimeout(t); if(!r.ok) throw new Error('HTTP '+r.status); return r.text();})
+        .then(txt=>{
+            if(!txt||txt.length<5) throw new Error('Empty CSV');
+            // reject an HTML error/login page returned instead of CSV
+            if(/^\s*</.test(txt)) throw new Error('Non-CSV response');
+            return parseCSV(txt);
+        });
+}
+// gviz JSONP fallback -> returns 2D array [headers, ...rows]
+function fetchJSONP(gid){
+    return new Promise((resolve,reject)=>{
+        const cb='_catCB'+(_cbCounter++);
+        const script=document.createElement('script');
+        const url=`https://docs.google.com/spreadsheets/d/${sheetIdForGid(gid)}/gviz/tq?tq=${encodeURIComponent('select *')}&tqx=out:json;responseHandler:${cb}&gid=${gid}`;
+        const timer=setTimeout(()=>{ cleanup(); reject(new Error('JSONP timeout gid='+gid)); },20000);
+        function cleanup(){ delete window[cb]; if(script.parentNode) script.parentNode.removeChild(script); clearTimeout(timer); }
+        window[cb]=function(resp){
+            try{
+                const table=resp.table;
+                const headers=table.cols.map(c=>c.label||'');
+                const out=[headers];
+                table.rows.forEach(r=>{
+                    out.push(r.c.map(cell=>{
+                        if(!cell||cell.v===null||cell.v===undefined) return '';
+                        if(cell.f!==undefined && cell.f!=='') return String(cell.f);
+                        if(typeof cell.v==='string' && cell.v.match(/^Date\((\d+),(\d+),(\d+)/)){
+                            const p=cell.v.match(/Date\((\d+),(\d+),(\d+)/);
+                            return (parseInt(p[2])+1).toString().padStart(2,'0')+'/'+parseInt(p[3]).toString().padStart(2,'0')+'/'+p[1];
+                        }
+                        return String(cell.v);
+                    }));
+                });
+                resolve(out);
+            }catch(e){ reject(e); }
+            cleanup();
+        };
+        script.onerror=()=>{ cleanup(); reject(new Error('JSONP network error gid='+gid)); };
+        script.src=url;
+        document.head.appendChild(script);
+    });
+}
+function parseCSV(text){
+    const rows=[]; let cur=[],f='',q=false;
+    for(let i=0;i<text.length;i++){const c=text[i];
+        if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+        else { if(c==='"')q=true; else if(c===','){cur.push(f);f='';} else if(c==='\r'){} else if(c==='\n'){cur.push(f);f='';if(cur.length)rows.push(cur);cur=[];} else f+=c; }
+    }
+    if(f||cur.length){cur.push(f); if(cur.some(x=>x!=='')) rows.push(cur);}
+    return rows;
+}
+function toObjects(raw){
+    if(!raw||!raw.length) return [];
+    const hdr = raw[0].map(h=>(h||'').trim());
+    return raw.slice(1).filter(r=>r.some(c=>c&&c.trim())).map(r=>{
+        const o={}; hdr.forEach((h,i)=>o[h]=(r[i]||'').trim()); return o;
+    });
+}
+
+// ================= STATE =================
+let rows=[];            // sales rows
+let imageMap={};        // PID -> url
+let filtered=[];        // after filters
+let productList=[];     // aggregated products for current filter
+const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// robust date parse -> Date object (local midnight)
+function parseDate(s){
+    if(!s) return null;
+    s=s.trim();
+    let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/); // MM/DD/YYYY
+    if(m) return new Date(+m[3],+m[1]-1,+m[2]);
+    m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);     // YYYY-MM-DD
+    if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+    const d=new Date(s); return isNaN(d)?null:d;
+}
+function fmtDateInput(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function num(v){ if(v==null) return 0; const n=parseFloat(String(v).replace(/[,$\s]/g,'')); return isNaN(n)?0:n; }
+// Last-resort: find any "Item Gross Sales" column regardless of currency suffix.
+function salesFromAny(r){
+    for(const k in r){ if(/^item gross sales/i.test(k)) return r[k]; }
+    return 0;
+}
+// Currency-aware money formatter. Uses the active market's symbol (S$ / RM).
+function money(n){ return MARKET.currency+Math.round(n).toLocaleString(); }
+
+// Category canonicalisation: same name regardless of case/spacing -> one category.
+// Everything is normalised to Title Case, so "FLOWERS"/"Flowers"/"flowers" all
+// become a single "Flowers", and "plants"/"Plants" merge into "Plants".
+let _catCanon={}; // lowercase key -> display label
+function canonCat(raw){
+    const t=(raw||'').trim();
+    if(!t) return 'Uncategorised';
+    const key=t.toLowerCase();
+    if(!_catCanon[key]){
+        // Prefer a Title-Cased label for a clean display
+        _catCanon[key]=t.replace(/\w\S*/g,w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase());
+    }
+    return _catCanon[key];
+}
+
+// Build PID -> image URL map from the raw 2D array by COLUMN POSITION.
+// The image tab's first column is the product id, and the first cell in a row
+// containing an http(s) link is the image url. Header row is skipped automatically.
+function buildImageMap(raw){
+    const map={};
+    if(!raw||!raw.length) return map;
+    raw.forEach(row=>{
+        if(!row||!row.length) return;
+        const pid=(row[0]||'').trim();
+        if(!pid) return;
+        if(pid.toLowerCase()==='product_id') return; // header row
+        // Find the first http(s) URL ANYWHERE in the row's cells.
+        // We search *inside* each cell (not just tokens that start with http)
+        // so wrappers like "++https://...png++" or stray quotes/spaces around
+        // the link are tolerated - we extract just the clean URL substring.
+        let url='';
+        for(let i=1;i<row.length;i++){
+            const cell=(row[i]||'').trim();
+            if(!cell) continue;
+            let m=cell.match(/https?:\/\/[^\s,"'<>()]+/i);
+            if(m){
+                // Strip trailing wrapper junk (e.g. the "++" some rows put
+                // around the link, or stray punctuation) so the src is clean.
+                url=m[0].replace(/[+*"'()<>]+$/,'');
+                break;
+            }
+        }
+        if(url) map[pid.toUpperCase()]=url;
+    });
+    return map;
+}
+
+// Show/hide the "images could not load" banner. Images fail only when the
+// /export download is CORS-blocked (running from file://) or returns nothing.
+function showImageHint(imgCount){
+    const el=document.getElementById('imageHint');
+    if(!el) return;
+    const failed = imgCount<50 && (_imgFetchError || location.protocol==='file:');
+    el.classList.toggle('hidden', !failed);
+}
+
+// ================= LOAD =================
+async function loadData(){
+    const loader=document.getElementById('loader'), dash=document.getElementById('dash'), status=document.getElementById('status');
+    loader.classList.remove('hidden'); dash.classList.add('hidden');
+    loader.innerHTML='<div class="spinner"></div>Fetching live data from Google Sheets...';
+    try{
+        _catCanon={}; // reset category canonical map each load
+        _usedFallback=false;
+        _imgFetchError='';
+        // fetchCSV uses /export?format=csv first, which returns the FULL sheet and
+        // ignores any active filter on the tab, so the dashboard reads all rows
+        // whether the sheet's filters are ON or OFF. Only if that endpoint is
+        // unreachable does it fall back to the (filter-respecting) gviz feed.
+        const [dataRaw,imgRaw]=await Promise.all([ fetchCSV(DATA_GID), fetchCSV(IMAGE_GID,{imageTab:true}) ]);
+        rows=toObjects(dataRaw).map(r=>{
+            r._d=parseDate(r['Date']);
+            r._units=num(r['Units']);
+            // Sales column name differs per market: "(S$)" for SG, "(RM)" for MY.
+            // Fall back to any "Item Gross Sales..." header so a minor label
+            // change on the sheet still works.
+            r._sales=num(r[MARKET.salesCol] || r['Item Gross Sales (S$)'] || r['Item Gross Sales (RM)'] || salesFromAny(r));
+            r._pid=(r['PID']||'').trim();
+            r._cat=canonCat(r['Category Type']);
+            r._loc=(r['Location']||'Unknown').trim();
+            r._fmt=(r['Store Type']||'Unknown').trim();
+            r._item=(r['Item']||'').trim();
+            return r;
+        }).filter(r=>r._d);
+
+        // image map: PID -> first image url (case-insensitive key)
+        // NOTE: the image tab has NO real header labels (gviz returns blank column
+        // names), so we map by COLUMN POSITION instead of header name:
+        //   column 0 = product_id, column 1 = image_urls.
+        // This works identically whether the data came from CSV or the JSONP fallback.
+        imageMap=buildImageMap(imgRaw);
+        const _imgCount=Object.keys(imageMap).length;
+        console.log('Image PIDs mapped:', _imgCount);
+        // If the image tab returned almost nothing, warn clearly - product cards
+        // will show "No image" and the user should hit Refresh.
+        if(_imgCount<50) console.warn('Image map looks empty ('+_imgCount+' PIDs). The image tab CSV may not have downloaded - try Refresh.');
+
+        buildFilters();
+        setQuickRange(7);
+        applyFilters();
+        loader.classList.add('hidden'); dash.classList.remove('hidden');
+        const span=rows.length?(fmtDateInput(minDataDate())+' to '+fmtDateInput(maxDataDate())):'no dates';
+        const imgCount=Object.keys(imageMap).length;
+        let msg='Last updated: '+new Date().toLocaleString()+'  |  '+rows.length.toLocaleString()+' rows  |  data span: '+span+'  |  images: '+imgCount.toLocaleString()+'  |  source: '+(_usedFallback?'FALLBACK feed':'CSV full export');
+        status.textContent=msg;
+        status.style.color=(_usedFallback||imgCount<50)?'#c0392b':'';
+        status.style.fontWeight='';
+
+        // If images could not be loaded because the page runs from file:// and
+        // Google's /export redirect was CORS-blocked, show a clear how-to-fix banner.
+        showImageHint(imgCount);
+        // Sections are now visible; recompute which nav item should be highlighted.
+        if(window._refreshSpy) window._refreshSpy();
+    }catch(e){
+        loader.innerHTML='<div class="err">Could not load data: '+e.message+'</div><br><small>Make sure the sheet is shared as "Anyone with the link can view".<br>If you opened this file directly and see this, try refreshing once more.</small>';
+    }
+}
+
+function buildFilters(){
+    const locs=[...new Set(rows.map(r=>r._loc))].filter(Boolean).sort();
+    const fmts=[...new Set(rows.map(r=>r._fmt))].filter(Boolean).sort();
+    const cats=orderedCats([...new Set(rows.map(r=>r._cat))].filter(Boolean));
+    fill('locFilter','All locations',locs);
+    fill('fmtFilter','All formats',fmts);
+    fill('catFilter','All categories',cats);
+    // Cap both date pickers at yesterday so the user can't select today or a future date.
+    const ymax=fmtDateInput(yesterday());
+    document.getElementById('fromDate').max=ymax;
+    document.getElementById('toDate').max=ymax;
+}
+function fill(id,allLabel,vals){
+    const sel=document.getElementById(id);
+    sel.innerHTML='<option value="__all">'+allLabel+'</option>'+vals.map(v=>`<option value="${v.replace(/"/g,'&quot;')}">${v}</option>`).join('');
+}
+
+// quick range buttons
+document.getElementById('quickRange').addEventListener('click',e=>{
+    if(e.target.tagName!=='BUTTON') return;
+    document.querySelectorAll('#quickRange button').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    setQuickRange(+e.target.dataset.days);
+    applyFilters();
+});
+function maxDataDate(){
+    let mx=null; rows.forEach(r=>{ if(r._d&&(!mx||r._d>mx)) mx=r._d; }); return mx||new Date();
+}
+function minDataDate(){
+    let mn=null; rows.forEach(r=>{ if(r._d&&(!mn||r._d<mn)) mn=r._d; }); return mn||new Date();
+}
+// Yesterday = running date minus 1 day (local time). The "To date" never goes past this,
+// so if today is 7 Sep the dashboard shows data up to 6 Sep only.
+function yesterday(){
+    const d=new Date();
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-1);
+    return d;
+}
+function setQuickRange(days){
+    // "To" date is always capped at yesterday (running date - 1 day).
+    const to=yesterday();
+    // Fixed calendar window ending yesterday (e.g. 60d = yesterday - 59 days).
+    // NO clamping to the data's min date, so the range ALWAYS changes on click
+    // even if some days in the window have no data yet.
+    const from=new Date(to);
+    from.setDate(from.getDate()-(days-1));
+    document.getElementById('fromDate').value=fmtDateInput(from);
+    document.getElementById('toDate').value=fmtDateInput(to);
+}
+// manual date change clears quick highlight
+['fromDate','toDate'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+    document.querySelectorAll('#quickRange button').forEach(b=>b.classList.remove('active'));
+}));
+
+function resetFilters(){
+    document.getElementById('locFilter').value='__all';
+    document.getElementById('fmtFilter').value='__all';
+    document.getElementById('catFilter').value='__all';
+    document.querySelectorAll('#quickRange button').forEach(b=>b.classList.remove('active'));
+    document.querySelector('#quickRange button[data-days="7"]').classList.add('active');
+    setQuickRange(7);
+    applyFilters();
+}
+
+// ================= FILTER + RENDER =================
+function applyFilters(){
+    const from=parseDate(document.getElementById('fromDate').value);
+    const to=parseDate(document.getElementById('toDate').value);
+    const loc=document.getElementById('locFilter').value;
+    const fmt=document.getElementById('fmtFilter').value;
+    const cat=document.getElementById('catFilter').value;
+    if(to) to.setHours(23,59,59,999);
+
+    filtered=rows.filter(r=>{
+        if(from&&r._d<from) return false;
+        if(to&&r._d>to) return false;
+        if(loc!=='__all'&&r._loc!==loc) return false;
+        if(fmt!=='__all'&&r._fmt!==fmt) return false;
+        if(cat!=='__all'&&r._cat!==cat) return false;
+        return true;
+    });
+
+    renderKPIs();
+    renderTrend();
+    renderMix();
+    renderCatBar();
+    aggregateProducts();
+    renderCatHighlights();
+    renderCatTable();
+    renderProducts();
+
+    const f=document.getElementById('fromDate').value, t=document.getElementById('toDate').value;
+    document.getElementById('trendHint').textContent='Daily gross sales by category ('+f+' to '+t+')';
+}
+
+function renderKPIs(){
+    const sales=filtered.reduce((a,r)=>a+r._sales,0);
+    const units=filtered.reduce((a,r)=>a+r._units,0);
+    const cats=new Set(filtered.map(r=>r._cat)).size;
+    const prods=new Set(filtered.map(r=>r._pid||r._item)).size;
+    const aiv=units>0?sales/units:0;
+    const kpis=[
+        {label:'Gross Sales',value:money(sales),sub:'selected range',ic:'teal',icon:'&#128181;'},
+        {label:'Units Sold',value:Math.round(units).toLocaleString(),sub:'items',ic:'coral',icon:'&#128230;'},
+        {label:'Avg Item Value',value:money(aiv),sub:'per unit',ic:'amber',icon:'&#9878;'},
+        {label:'Active Products',value:prods.toLocaleString(),sub:cats+' categories',ic:'green',icon:'&#127873;'}
+    ];
+    document.getElementById('kpis').innerHTML=kpis.map(k=>`
+        <div class="kpi"><div class="ic ${k.ic}">${k.icon}</div>
+            <div class="label">${k.label}</div>
+            <div class="value">${k.value}</div>
+            <div class="sub">${k.sub}</div>
+        </div>`).join('');
+}
+
+// chart instances
+let charts={};
+function destroy(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+function catColor(c,i){ return COLORS[c]&&/^#[0-9a-f]{6}$/i.test(COLORS[c])?COLORS[c]:PALETTE[i%PALETTE.length]; }
+
+function renderTrend(){
+    destroy('trend');
+    // dates in range
+    const days=[...new Set(filtered.map(r=>fmtDateInput(r._d)))].sort();
+    const cats=orderedCats([...new Set(filtered.map(r=>r._cat))]);
+    const ds=cats.map((c,i)=>({
+        label:c,
+        data:days.map(d=>filtered.filter(r=>r._cat===c&&fmtDateInput(r._d)===d).reduce((a,r)=>a+r._sales,0)),
+        borderColor:catColor(c,i), backgroundColor:catColor(c,i)+'22',
+        tension:.35, fill:false, borderWidth:2, pointRadius:days.length>20?0:3
+    }));
+    charts.trend=new Chart(document.getElementById('trendChart'),{
+        type:'line',
+        data:{labels:days.map(d=>d.slice(5)),datasets:ds},
+        options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}},
+            scales:{y:{beginAtZero:true,ticks:{callback:v=>MARKET.currency+v}}}}
+    });
+}
+function renderMix(){
+    destroy('mix');
+    const cats=orderedCats([...new Set(filtered.map(r=>r._cat))]);
+    const vals=cats.map(c=>filtered.filter(r=>r._cat===c).reduce((a,r)=>a+r._sales,0));
+    charts.mix=new Chart(document.getElementById('mixChart'),{
+        type:'doughnut',
+        data:{labels:cats,datasets:[{data:vals,backgroundColor:cats.map((c,i)=>catColor(c,i)),borderWidth:2,borderColor:'#fff'}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+            plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+                tooltip:{callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);const p=t?(c.parsed/t*100).toFixed(1):0;return ` ${c.label}: ${money(c.parsed)} (${p}%)`;}}}}}
+    });
+}
+function renderCatBar(){
+    destroy('catbar');
+    const cats=orderedCats([...new Set(filtered.map(r=>r._cat))]);
+    const sales=cats.map(c=>filtered.filter(r=>r._cat===c).reduce((a,r)=>a+r._sales,0));
+    const units=cats.map(c=>filtered.filter(r=>r._cat===c).reduce((a,r)=>a+r._units,0));
+    charts.catbar=new Chart(document.getElementById('catBarChart'),{
+        data:{labels:cats,datasets:[
+            {type:'bar',label:'Gross Sales ('+MARKET.currency+')',data:sales,backgroundColor:'#1f9e8f',borderRadius:6,yAxisID:'y'},
+            {type:'line',label:'Units',data:units,borderColor:'#ef6c53',backgroundColor:'#ef6c53',tension:.3,yAxisID:'y1',borderWidth:2}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}},
+            scales:{y:{beginAtZero:true,position:'left',ticks:{callback:v=>MARKET.currency+v}},
+                    y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}}}}
+    });
+}
+// One highlight card per category: its sales, share, units, avg item value,
+// and the single best-selling product in that category (with image).
+function renderCatHighlights(){
+    const el=document.getElementById('catHighlights');
+    const cats=orderedCats([...new Set(filtered.map(r=>r._cat))]);
+    if(!cats.length){ el.innerHTML='<div class="hint">No category data for the selected filters.</div>'; return; }
+    const totalSales=filtered.reduce((a,r)=>a+r._sales,0)||1;
+
+    el.innerHTML=cats.map(c=>{
+        const cr=filtered.filter(r=>r._cat===c);
+        const sales=cr.reduce((a,r)=>a+r._sales,0);
+        const units=cr.reduce((a,r)=>a+r._units,0);
+        const aiv=units?sales/units:0;
+        const share=sales/totalSales*100;
+        const color=catColor(c,cats.indexOf(c));
+
+        // best product in this category (from the aggregated product list)
+        const top=productList.filter(p=>p.cat===c).sort((a,b)=>b.sales-a.sales)[0];
+        let topHtml='<div class="ch-top-empty">No product</div>';
+        if(top){
+            const url=imageMap[(top.pid||'').toUpperCase()]||'';
+            const thumb=url
+                ? `<img src="${url}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="ch-noimg" style="display:none;">&#127873;</div>`
+                : `<div class="ch-noimg">&#127873;</div>`;
+            topHtml=`<div class="ch-top">
+                <div class="ch-thumb">${thumb}</div>
+                <div class="ch-topinfo">
+                    <div class="ch-toplabel">Top product</div>
+                    <div class="ch-topname" title="${(top.item||'').replace(/"/g,'&quot;')}">${top.item||'(unnamed)'}</div>
+                    <div class="ch-topstats">${money(top.sales)} &middot; ${Math.round(top.units).toLocaleString()} units</div>
+                </div>
+            </div>`;
+        }
+
+        return `<div class="ch-card" style="border-top:4px solid ${color};">
+            <div class="ch-head">
+                <span class="ch-name">${c}</span>
+                <span class="ch-share" style="background:${color}22;color:${color};">${share.toFixed(1)}%</span>
+            </div>
+            <div class="ch-sales">${money(sales)}</div>
+            <div class="ch-metrics">
+                <div><span class="ch-m">${Math.round(units).toLocaleString()}</span><span class="ch-l">Units</span></div>
+                <div><span class="ch-m">${money(aiv)}</span><span class="ch-l">Avg Value</span></div>
+                <div><span class="ch-m">${new Set(cr.map(r=>r._pid||r._item)).size}</span><span class="ch-l">Products</span></div>
+            </div>
+            ${topHtml}
+        </div>`;
+    }).join('');
+}
+function renderCatTable(){
+    const salesHdr=document.getElementById('catTableSalesHdr');
+    if(salesHdr) salesHdr.textContent='Gross Sales ('+MARKET.currency+')';
+    const cats=[...new Set(filtered.map(r=>r._cat))];
+    const totalSales=filtered.reduce((a,r)=>a+r._sales,0)||1;
+    const rowsData=cats.map(c=>{
+        const cr=filtered.filter(r=>r._cat===c);
+        const sales=cr.reduce((a,r)=>a+r._sales,0);
+        const units=cr.reduce((a,r)=>a+r._units,0);
+        const prods=new Set(cr.map(r=>r._pid||r._item)).size;
+        return {c,sales,units,prods,aiv:units?sales/units:0,share:sales/totalSales*100};
+    }).sort((a,b)=>b.units-a.units); // sort by Units sold, highest to lowest
+    document.querySelector('#catTable tbody').innerHTML=rowsData.map(r=>`
+        <tr>
+            <td><span class="pill" style="background:${catColor(r.c,cats.indexOf(r.c))}22;color:${catColor(r.c,cats.indexOf(r.c))}">${r.c}</span></td>
+            <td>${Math.round(r.units).toLocaleString()}</td>
+            <td>${money(r.sales)}</td>
+            <td>${money(r.aiv)}</td>
+            <td>${r.prods}</td>
+            <td>${r.share.toFixed(1)}%</td>
+        </tr>`).join('');
+}
+
+function aggregateProducts(){
+    const map={};
+    filtered.forEach(r=>{
+        const key=r._pid||r._item;
+        if(!key) return;
+        if(!map[key]) map[key]={pid:r._pid,item:r._item,cat:r._cat,units:0,sales:0};
+        map[key].units+=r._units; map[key].sales+=r._sales;
+    });
+    productList=Object.values(map);
+}
+function renderProducts(){
+    const sortBy=document.getElementById('prodSort').value;
+    const top=+document.getElementById('prodTop').value;
+    const list=[...productList].sort((a,b)=>b[sortBy]-a[sortBy]).slice(0,top);
+    const el=document.getElementById('products');
+    if(!list.length){ el.innerHTML='<div class="hint">No products for the selected filters.</div>'; return; }
+    el.innerHTML=list.map((p,i)=>{
+        const url=imageMap[(p.pid||'').toUpperCase()]||'';
+        const pidLabel='PID: '+(p.pid||'-');
+        // If image is missing OR fails to load, show a clean placeholder (no broken markup).
+        const img=url
+            ? `<img src="${url}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div class="noimg" style="display:none;">No image<br><small>${pidLabel}</small></div>`
+            : `<div class="noimg">No image<br><small>${pidLabel}</small></div>`;
+        return `<div class="pcard">
+            <div class="imgbox">
+                <span class="rank">#${i+1}</span>
+                <span class="catbadge">${p.cat}</span>
+                ${img}
+            </div>
+            <div class="body">
+                <div class="name">${p.item||'(unnamed)'}</div>
+                <div class="pid">PID: ${p.pid||'-'}</div>
+                <div class="stats">
+                    <div class="s"><span class="n">${money(p.sales)}</span><span class="l">Gross Sales</span></div>
+                    <div class="s" style="text-align:right;"><span class="n">${Math.round(p.units).toLocaleString()}</span><span class="l">Units</span></div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ================= CSV DOWNLOAD =================
+// Exports the currently-filtered product data (respects date range, location,
+// store format and category filters) to a CSV for analysis.
+// Columns: PID, Image (URL), Image Preview (Excel =IMAGE formula),
+//          Category Name, Product Name, Number of Units Sold, Gross Sales.
+function csvCell(v){
+    // Quote a field and escape embedded quotes so commas/newlines are safe.
+    const s=(v===null||v===undefined)?'':String(v);
+    return '"'+s.replace(/"/g,'""')+'"';
+}
+function downloadCSV(){
+    if(!filtered||!filtered.length){ alert('No data to download for the selected filters.'); return; }
+
+    // Aggregate filtered rows by product + location + store format, so each row
+    // reflects a specific product's sales at a specific location/format.
+    const map={};
+    filtered.forEach(r=>{
+        const prod=r._pid||r._item;
+        if(!prod) return;
+        const key=prod+'||'+r._loc+'||'+r._fmt;
+        if(!map[key]) map[key]={pid:r._pid,item:r._item,cat:r._cat,loc:r._loc,fmt:r._fmt,units:0,sales:0};
+        map[key].units+=r._units;
+        map[key].sales+=r._sales;
+    });
+    // Sort by units sold, highest to lowest.
+    const list=Object.values(map).sort((a,b)=>b.units-a.units);
+
+    const from=document.getElementById('fromDate').value;
+    const to=document.getElementById('toDate').value;
+
+    const header=['PID','Image','Image Preview','Category Name','Product Name','Location Name','Store Format','Number of Units Sold','Gross Sales ('+MARKET.currency+')'];
+    const lines=[header.map(csvCell).join(',')];
+
+    list.forEach((p)=>{
+        const url=imageMap[(p.pid||'').toUpperCase()]||'';
+        // Excel/Google Sheets IMAGE() formula so the picture renders in-cell.
+        const imgFormula=url?('=IMAGE("'+url.replace(/"/g,'""')+'")'):'';
+        lines.push([
+            csvCell(p.pid),
+            csvCell(url),
+            csvCell(imgFormula),
+            csvCell(p.cat),
+            csvCell(p.item),
+            csvCell(p.loc),
+            csvCell(p.fmt),
+            csvCell(Math.round(p.units)),
+            csvCell(Math.round(p.sales))
+        ].join(','));
+    });
+
+    // BOM so Excel reads UTF-8 correctly.
+    const csv='\uFEFF'+lines.join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(blob);
+    link.download='Category_Product_'+MARKET.key+'_'+(from||'start')+'_to_'+(to||'end')+'.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+}
+
+// ================= SIDEBAR NAV + SCROLL-SPY =================
+(function(){
+    const nav=document.getElementById('sideNav');
+    const links=[...nav.querySelectorAll('a')];
+
+    // Click a nav item -> smooth-scroll to its section.
+    links.forEach(a=>{
+        a.addEventListener('click',()=>{
+            const el=document.getElementById(a.dataset.target);
+            if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+        });
+    });
+
+    function setActive(link){
+        links.forEach(l=>l.classList.remove('active'));
+        if(link) link.classList.add('active');
+    }
+
+    // Scroll-spy: highlight the nav item whose section is currently in view.
+    // Runs on scroll (throttled via requestAnimationFrame) so the highlighter
+    // moves up and down as you scroll through the page.
+    let ticking=false;
+    function updateSpy(){
+        ticking=false;
+        // marker line ~1/3 down the viewport decides the "current" section
+        const marker=window.scrollY + window.innerHeight*0.33;
+        let current=links[0];
+        links.forEach(a=>{
+            const el=document.getElementById(a.dataset.target);
+            if(!el) return;
+            const top=el.getBoundingClientRect().top + window.scrollY;
+            if(top<=marker) current=a; // last section whose top has passed the marker
+        });
+        // If scrolled to the very bottom, force the last nav item active.
+        if(Math.ceil(window.scrollY+window.innerHeight) >= document.body.scrollHeight-2){
+            current=links[links.length-1];
+        }
+        setActive(current);
+    }
+    function onScroll(){ if(!ticking){ requestAnimationFrame(updateSpy); ticking=true; } }
+    window.addEventListener('scroll',onScroll,{passive:true});
+    window.addEventListener('resize',onScroll,{passive:true});
+    // expose so we can refresh after data renders (section positions change)
+    window._refreshSpy=updateSpy;
+})();
+
+// ================= MARKET TOGGLE =================
+// checked === true  -> Malaysia (right).  checked === false -> Singapore (left).
+function onMarketToggle(isMalaysia){
+    MARKET = isMalaysia ? MARKETS.MY : MARKETS.SG;
+    // keep the derived globals used by the fetch layer in sync
+    SHEET_ID = MARKET.sheetId;
+    DATA_GID = MARKET.dataGid;
+    IMAGE_SHEET_ID = MARKET.imageSheetId;
+    IMAGE_GID = MARKET.imageGid;
+
+    // update label highlight
+    document.getElementById('mtLabelSG').classList.toggle('active',!isMalaysia);
+    document.getElementById('mtLabelMY').classList.toggle('active',isMalaysia);
+
+    // update title/heading
+    document.getElementById('pageTitle').textContent='Marketplace Category Performance - '+MARKET.key;
+    document.title='Marketplace Category Performance - '+MARKET.key;
+
+    // reload from the newly-selected market's sheet
+    loadData();
+}
+
+// ================= INIT =================
+// Force a known starting state so the header, toggle and data always agree
+// (browsers can remember a checkbox as "checked" across refresh).
+(function initMarket(){
+    const t=document.getElementById('marketToggle');
+    if(t) t.checked=false;              // default = Singapore (left)
+    MARKET=MARKETS.SG;
+    SHEET_ID=MARKET.sheetId;
+    DATA_GID=MARKET.dataGid;
+    IMAGE_SHEET_ID=MARKET.imageSheetId;
+    IMAGE_GID=MARKET.imageGid;
+    document.getElementById('mtLabelSG').classList.add('active');
+    document.getElementById('mtLabelMY').classList.remove('active');
+    document.getElementById('pageTitle').textContent='Marketplace Category Performance - SG';
+    document.title='Marketplace Category Performance - SG';
+})();
+loadData();
+</script>
+</body>
+</html>
